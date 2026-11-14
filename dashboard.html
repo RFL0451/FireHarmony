@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fire Dashboard: MODIS vs VIIRS vs Harmonized</title>
+<meta name="description" content="Metrics and charts for MODIS and VIIRS fire detections and their harmonized record">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head><body class="dashpage">
+<a class="skip" href="#main">Skip to dashboard</a>
+<header class="nav"><div class="wrap">
+<a class="brand" href="index.html"><i aria-hidden="true"></i>FireHarmony</a>
+<nav aria-label="Main"><a href="index.html">Overview</a><a href="map.html">Map</a><a href="dashboard.html" aria-current="page">Dashboard</a><a href="wiki.html">Wiki</a></nav>
+</div></header>
+<main id="main" class="wrap">
+<h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin-top:1.5rem">Fire detection dashboard</h1>
+<div class="dash">
+<form class="controls" id="controls" aria-label="Filters">
+<fieldset><legend>Time range</legend>
+<label class="l vh" for="preset">Time range preset</label>
+<select id="preset"><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="custom">Custom range</option></select>
+<div class="dates"><div><label class="l" for="from">From</label><input type="date" id="from"></div><div><label class="l" for="to">To</label><input type="date" id="to"></div></div>
+</fieldset>
+<fieldset><label class="l" for="region">Region</label>
+<select id="region"></select></fieldset>
+<div class="persist-row">
+<label class="chk"><input type="checkbox" id="hidePersist"> Hide persistent hot spots</label>
+<span class="tip"><button type="button" aria-label="About persistent hotspots">?</button><span role="tooltip">A hot spot that recurs at nearly the same place on several days in a row is often an industrial flare or volcano, not a fire. Hidden points are also excluded from the CSV export.</span></span>
+</div>
+<div class="row actions"><button class="btn sm" type="submit">Apply / Refresh</button><button class="btn sm alt" type="reset" id="reset">Reset filters</button></div>
+<p class="status" id="status" role="status" aria-live="polite"><span class="spin" aria-hidden="true"></span><span id="statusText"></span></p>
+<details class="adv" id="adv">
+<summary>Advanced settings</summary>
+<div class="adv-body">
+<fieldset><legend>Matching rule
+<span class="tip"><button type="button" aria-label="About the matching rule">?</button><span role="tooltip">Two detections count as the same fire when they are closer than the distance limit and their times differ by less than the time limit. Move the sliders to see how sensitive the overlap is.</span></span></legend>
+<label class="l" for="dist">Max distance: <output id="distOut">1 km</output></label><input type="range" id="dist" min="0.5" max="3" step="0.25" value="1">
+<label class="l" for="hours">Max time gap: <output id="hoursOut">3 h</output></label><input type="range" id="hours" min="1" max="6" step="1" value="3"></fieldset>
+<fieldset><legend>Persistent hot spot detection</legend>
+<label class="l" for="persistDays">Recurs ≥ <output id="persistDaysOut">3</output> days</label>
+<input type="range" id="persistDays" min="2" max="10" step="1" value="3">
+<label class="l" for="persistKm">Within <output id="persistKmOut">1</output> km</label>
+<input type="range" id="persistKm" min="0.5" max="3" step="0.5" value="1">
+</fieldset>
+<div class="row">
+  <button class="btn sm alt" type="button" id="csv" title="Download points as CSV">Points CSV</button>
+  <button class="btn sm alt" type="button" id="csvClusters" title="Download clusters as CSV">Clusters CSV</button>
+</div>
+</div>
+</details>
+</form>
+
+<div>
+<div class="metrics" id="metrics" aria-label="Key metrics"></div>
+<p class="summary" id="summary" aria-live="polite"></p>
+
+<div class="card datasource">
+<h3>Data loaded from FIRMS API
+<span class="tip"><button type="button" aria-label="About the data source">?</button><span role="tooltip">How much data the last load pulled from the NASA FIRMS API. The server caches data in 5-day blocks, so shrinking the time range (for example from 30 days to a week) is served from cache and makes no new API calls.</span></span></h3>
+<div class="keyrow">
+<label class="l" for="apiKey">FIRMS API key
+<span class="tip"><button type="button" aria-label="About the FIRMS key">?</button><span role="tooltip">Free key from firms.modaps.eosdis.nasa.gov/api/map_key. It is tested against the live FIRMS service and saved to server/.env only if it works.</span></span></label>
+<div class="row lock-row">
+<input type="password" id="apiKey" autocomplete="off" spellcheck="false" placeholder="paste FIRMS key">
+<button class="btn sm" type="button" id="apiKeyApply">Test &amp; apply</button>
+</div>
+<p class="status" id="keyStatus" role="status" aria-live="polite"></p>
+</div>
+<div class="metrics" id="dataMeta" aria-label="FIRMS API data metrics"></div>
+</div>
+
+<details class="about"><summary>About this data and method</summary><p>When the local API proxy is running, the dashboard shows live NASA FIRMS detections; otherwise it falls back to synthetic demo data modelled on FIRMS fields. Harmonization matches each MODIS detection to the nearest unused VIIRS detection inside the distance and time limits, then merges the pair into one record. Anomalous days are those where unique harmonized detections sit at least 2 standard deviations above the period average</p></details>
+<div class="charts">
+<div class="card wide"><h3>Detections over time</h3><div class="cv"><canvas id="cTime" role="img" aria-label="Line chart of daily detections for MODIS, VIIRS and harmonized data"></canvas></div></div>
+<div class="card"><h3>Confidence distribution
+<span class="tip"><button type="button" aria-label="About confidence">?</button><span role="tooltip">Confidence (0-100) is the sensor algorithm's certainty that a hot spot is a real fire. VIIRS low/nominal/high classes are shown as 20/60/90</span></span></h3><div class="cv"><canvas id="cConf" role="img" aria-label="Histogram of confidence values by sensor"></canvas></div></div>
+<div class="card"><h3>Detection overlap</h3><div class="cv"><canvas id="cOver" role="img" aria-label="Doughnut chart of MODIS-only, VIIRS-only and both-sensor detections"></canvas></div></div>
+<div class="card wide"><h3>Anomaly watch
+<span class="tip"><button type="button" aria-label="About anomalies">?</button><span role="tooltip">A day is anomalous when its unique harmonized detections are at least 2 standard deviations above the period average (z-score of 2 or more). Needs at least 7 days.</span></span></h3>
+<p id="anom" aria-live="polite"></p>
+<div style="overflow-x:auto"><table class="reg"><caption class="sr">Regional activity and anomaly status</caption><thead><tr><th scope="col">Region</th><th scope="col">Hot spots</th><th scope="col">Typical day</th><th scope="col">Peak day</th><th scope="col">Peak count</th><th scope="col">Status</th></tr></thead><tbody id="regions"></tbody></table></div></div>
+</div></div>
+</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/persistent.js"></script>
+<script src="js/export.js"></script>
+<script src="js/url-state.js"></script>
+<script src="js/api.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/confidence.js"></script>
+<script src="js/tips.js"></script>
+<script src="js/dashboard.js"></script>
+</body></html>

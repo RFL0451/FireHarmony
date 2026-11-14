@@ -1,0 +1,21 @@
+# Зависимости
+node_modules/
+package-lock.json
+
+# Переменные окружения (СЕКРЕТНЫЙ КЛЮЧ!)
+.env
+.env.local
+server/.env
+
+# Логи
+*.log
+npm-debug.log*
+
+# Системный мусор ОС
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Настройки редакторов
+.vscode/
+.idea/

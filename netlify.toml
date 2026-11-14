@@ -1,9 +1,0 @@
-# Netlify sozlamalari. Bu faylga tegmang.
-# Har deploy'da build.sh repo'dagi eng oxirgi yuklangan .zip ni ochib, saytga chiqaradi.
-[build]
-  command = "bash build.sh"
-  publish = "dist"
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"

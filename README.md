@@ -1,93 +1,113 @@
-# FireHarmony
+# FireHarmony 🔥🛰️
 
+**Harmonizing MODIS and VIIRS for Global Fire Monitoring**
+*Built for the NASA Space Apps Challenge 2026.*
 
+## 📖 Overview
+MODIS and VIIRS are two satellite sensors that detect thermal anomalies (hot spots). Because they have different spatial resolutions and operational periods, their data cannot be simply merged. 
 
-## Getting started
+**FireHarmony** is a web application that harmonizes these two datasets into a single, unified record. It matches detections of the same fire within a configurable distance and time window, revealing fires that a single sensor would miss.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## ✨ Features
+- **Interactive Map:** Compare MODIS, VIIRS, and Harmonized data layers.
+- **Adjustable Matching Rules:** Tune the maximum distance (km) and time gap (hours) to see how the harmonization changes in real-time.
+- **False-Positive Filter:** Automatically flags and hides persistent hot spots (like industrial flares or volcanoes).
+- **Anomaly Watch:** Statistical analysis (Z-score) to identify days with unusually high fire activity.
+- **CSV Export:** Download raw points or harmonized clusters for further analysis.
+- **Live Data:** Connects directly to the NASA FIRMS API (with a synthetic fallback for offline demos).
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## 🛠️ Tech Stack
+- **Frontend:** Vanilla JavaScript, Leaflet.js (Maps), Chart.js (Analytics), CSS3.
+- **Backend (BFF):** Node.js, Express.js, Dotenv.
+- **Data Source:** NASA FIRMS API.
 
-## Add your files
+---
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## 🚀 How to Run Locally (Detailed Guide)
 
+This project consists of two parts: **Frontend** (UI, map, charts) and **Backend / BFF** (server that securely requests data from NASA and serves it to the frontend). 
+
+### 📋 Prerequisites
+1. **Node.js** (version 18 or higher). 
+   - Download: [https://nodejs.org/](https://nodejs.org/) (LTS version recommended). Make sure "Add to PATH" is checked during installation.
+2. **NASA FIRMS API Key**.
+   - Get your free `MAP_KEY` here: [https://firms.modaps.eosdis.nasa.gov/api/map_key/](https://firms.modaps.eosdis.nasa.gov/api/map_key/).
+3. **Terminal** (PowerShell or CMD on Windows).
+
+### 🗂️ Project Structure
+- `js/`, `css/`, `index.html`, `dashboard.html` — **Frontend** (browser files).
+- `server/` — **Backend** (Node.js server).
+- `package.json` (in the root) — Scripts to easily run the whole project.
+
+### 🛠️ Step-by-Step Setup
+
+#### Step 1. Configure the Backend (API Key)
+The server needs your NASA key. It is stored in a `.env` file.
+
+1. Open PowerShell or CMD and navigate to the `server` folder:
+   ```cmd
+   cd path/to/your/project/server
+   ```
+2. Copy the example environment file:
+   ```cmd
+   copy .env.example .env
+   ```
+3. Open the newly created `.env` file in any text editor (Notepad, VS Code, etc.).
+4. Paste your NASA key after the `=` sign:
+   ```env
+   FIRMS_MAP_KEY=your_actual_nasa_key_here
+   PORT=3000
+   ```
+5. Save and close the file.
+
+#### Step 2. Install Dependencies
+1. Go back to the **root** directory of the project (where the main `index.html` is located):
+   ```cmd
+   cd ..
+   ```
+2. Run the installation script:
+   ```cmd
+   npm run install-all
+   ```
+   *This will automatically go into the `server` folder, download the required packages (Express, Dotenv), and create the `node_modules` folder.*
+
+#### Step 3. Start the Server
+1. While in the root directory, run:
+   ```cmd
+   npm start
+   ```
+2. You should see this message in the console: `App + API on http://localhost:3000`
+3. **Keep this terminal window open!** The server must be running for the site to work.
+
+#### Step 4. Open the App
+Go to [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🖱️ How to Use the Dashboard
+
+- **Live Data vs. Demo Data:** By default, "Last 30 days" is selected. **NASA API does not allow requesting more than 5 days at once.** If you request 30 days, the server will return a `FIRMS 400` error, and the frontend will automatically fall back to synthetic mock data so the app doesn't look broken. The status will say `Showing demo data (synthetic)`.
+- **To see real NASA data:** Select `Custom range`, pick a period of **5 days or less**, and click `Apply / Refresh`. The status will change to `Live FIRMS data`.
+- **Harmonization:** Move the `Max distance` and `Max time gap` sliders to see how the number of matched points changes in real-time.
+- **Export:** Click `Download points as CSV` or `Download clusters as CSV` to get the data. They are perfectly formatted for Excel.
+
+---
+
+## 🆘 Troubleshooting (Windows)
+
+**Error: `npm error Missing script: "start"`**
+- You are in the wrong folder. The `npm start` command must be run in the root directory (where the main `package.json` is), not inside the `server` folder.
+
+**Error: `EADDRINUSE: address already in use :::3000`**
+- Port 3000 is already used by another program. Open `server/.env`, change `PORT=3000` to `PORT=3001`, save, and restart the server (`Ctrl+C`, then `npm start`).
+
+**Error: `FIRMS 400` in the server logs**
+- You are requesting data from NASA for too long a period. The NASA API allows a maximum of 5 days at a time. Reduce the date range.
+
+**Map is gray or not loading**
+- Make sure you have an active internet connection (the map uses external OpenStreetMap tiles).
+
+## 👥 Team
+- **Your Name** - Role
+- **Teammate Name** - Role
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/Nurbol-Xan/fireharmony.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-* [Set up project integrations](https://gitlab.com/Nurbol-Xan/fireharmony/-/settings/integrations)
-
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
