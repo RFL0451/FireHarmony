@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fire Map: MODIS vs VIIRS vs Harmonized</title>
+<meta name="description" content="Full-page map of MODIS and VIIRS fire detections with harmonized view">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css">
+<link rel="stylesheet" href="css/styles.css">
+</head><body class="mappage">
+<a class="skip" href="#map">Skip to map</a>
+<header class="nav"><div class="wrap">
+<a class="brand" href="index.html"><i aria-hidden="true"></i>FireHarmony</a>
+<nav aria-label="Main"><a href="index.html">Overview</a><a href="map.html" aria-current="page">Map</a><a href="dashboard.html">Dashboard</a><a href="wiki.html">Wiki</a></nav>
+</div></header>
+<main class="map-shell">
+<div id="map" role="region" aria-label="Map of fire detections"></div>
+
+<form class="controls map-controls" id="controls" aria-label="Map filters">
+<!-- ===== regular mode: always visible ===== -->
+<fieldset><legend>Satellites</legend>
+<div class="seg">
+<label><input type="radio" name="sensor" value="MODIS"><span class="dot" style="background:var(--fire)"></span>Only MODIS</label>
+<label><input type="radio" name="sensor" value="VIIRS"><span class="dot" style="background:var(--orange)"></span>Only VIIRS</label>
+<label><input type="radio" name="sensor" value="BOTH" checked><span class="dot" style="background:var(--gold)"></span>Combined</label>
+</div></fieldset>
+<fieldset><legend>Time bracket</legend>
+<label class="l vh" for="preset">Time range preset</label>
+<select id="preset"><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="custom" hidden>Custom range</option></select>
+</fieldset>
+<div class="persist-row">
+<label class="chk"><input type="checkbox" id="hidePersist"> Hide persistent hot spots</label>
+<span class="tip"><button type="button" aria-label="About persistent hotspots">?</button><span role="tooltip">A hot spot that recurs at nearly the same place on several days in a row is often an industrial flare or volcano, not a fire. Flag them in Advanced mode and hide them here.</span></span>
+</div>
+<p class="status" id="status" role="status" aria-live="polite"><span class="spin" aria-hidden="true"></span><span id="statusText"></span></p>
+
+<!-- ===== advanced mode toggle + password lock ===== -->
+<button class="btn sm alt adv-toggle" type="button" id="advToggle" aria-expanded="false">Advanced</button>
+<div class="adv-lock" id="advLock" hidden>
+<label class="l" for="advPass">Password</label>
+<div class="row lock-row"><input type="password" id="advPass" inputmode="numeric" autocomplete="off" placeholder="••••">
+<button class="btn sm" type="button" id="advUnlock">Unlock</button></div>
+<p class="adv-err" id="advErr" hidden>Wrong password</p>
+</div>
+
+<!-- ===== advanced mode: all other map settings (password protected) ===== -->
+<div class="adv-body" id="advBody" hidden>
+<fieldset><legend>Custom dates</legend>
+<div class="dates"><div><label class="l" for="from">From</label><input type="date" id="from"></div><div><label class="l" for="to">To</label><input type="date" id="to"></div></div>
+</fieldset>
+<fieldset><label class="l" for="region">Region</label>
+<select id="region"></select></fieldset>
+<fieldset><legend>Matching rule
+<span class="tip"><button type="button" aria-label="About the matching rule">?</button><span role="tooltip">Two detections count as the same fire when they are closer than the distance limit and their times differ by less than the time limit. Move the sliders to see how sensitive the overlap is.</span></span></legend>
+<label class="l" for="dist">Max distance: <output id="distOut">1 km</output></label><input type="range" id="dist" min="0.5" max="3" step="0.25" value="1">
+<label class="l" for="hours">Max time gap: <output id="hoursOut">3 h</output></label><input type="range" id="hours" min="1" max="6" step="1" value="3"></fieldset>
+<fieldset><legend>Persistent hot spot detection</legend>
+<label class="l" for="persistDays">Recurs ≥ <output id="persistDaysOut">3</output> days</label>
+<input type="range" id="persistDays" min="2" max="10" step="1" value="3">
+<label class="l" for="persistKm">Within <output id="persistKmOut">1</output> km</label>
+<input type="range" id="persistKm" min="0.5" max="3" step="0.5" value="1">
+</fieldset>
+<div class="row">
+  <button class="btn sm alt" type="button" id="csv" title="Download points as CSV">Points CSV</button>
+  <button class="btn sm alt" type="button" id="csvClusters" title="Download clusters as CSV">Clusters CSV</button>
+</div>
+<div class="row actions"><button class="btn sm" type="submit">Apply / Refresh</button><button class="btn sm alt" type="reset" id="reset">Reset filters</button></div>
+</div>
+</form>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/persistent.js"></script>
+<script src="js/export.js"></script>
+<script src="js/url-state.js"></script>
+<script src="js/api.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/confidence.js"></script>
+<script src="js/tips.js"></script>
+<script src="js/map.js"></script>
+</body></html>

@@ -1,0 +1,11 @@
+node_modules
+server/node_modules
+.env
+server/.env
+*.log
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+*.bat
+*.sh

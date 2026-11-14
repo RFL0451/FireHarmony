@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wiki: how FireHarmony processes the data</title>
+<meta name="description" content="Documentation of the FireHarmony data pipeline: sources, normalization, harmonization, persistence filter, anomaly detection and fire-likelihood scoring">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head><body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav"><div class="wrap">
+<a class="brand" href="index.html"><i aria-hidden="true"></i>FireHarmony</a>
+<nav aria-label="Main"><a href="index.html">Overview</a><a href="map.html">Map</a><a href="dashboard.html">Dashboard</a><a href="wiki.html" aria-current="page">Wiki</a></nav>
+</div></header>
+<main id="main" class="wrap wiki" style="padding:2rem 0 4rem">
+<h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Wiki: what happens to the data</h1>
+<p class="lead">This page documents every step between the raw satellite feeds and the points, charts and CSV files you see on the dashboard. It is written for users who want to trust (or audit) the numbers.</p>
+
+<h2>1. Data sources</h2>
+<ul>
+<li><b>NASA FIRMS</b> (Fire Information for Resource Management System), near-real-time API: <code>MODIS_NRT</code> (Terra/Aqua, ~1 km pixels, record since 2000) and <code>VIIRS_SNPP_NRT</code> (Suomi NPP, 375 m pixels, since 2012).</li>
+<li>The FIRMS area API accepts a bounding box and a range of <b>at most 5 days</b> per request. Longer ranges are rejected (HTTP 400).</li>
+<li>Each detection is a point with: latitude/longitude, acquisition date and time (UTC), brightness temperature (K), <b>FRP</b> — fire radiative power (MW), confidence, satellite and a day/night flag.</li>
+<li><b>Demo mode:</b> if the API key is missing or the request fails, the app falls back to synthetic detections modelled on FIRMS fields (the status line says “Showing demo data (synthetic)”). Demo numbers are not real fire counts.</li>
+</ul>
+
+<h2>2. Normalization (<code>server/normalize.js</code>)</h2>
+<p>The two sensors ship different CSV schemas, so the server first brings them into one common shape:</p>
+<table><thead><tr><th>Internal field</th><th>MODIS column</th><th>VIIRS column</th></tr></thead>
+<tbody>
+<tr><td><code>lat</code>, <code>lon</code></td><td>latitude, longitude</td><td>latitude, longitude</td></tr>
+<tr><td><code>t</code> (UTC ms)</td><td colspan="2">acq_date + acq_time, parsed as UTC</td></tr>
+<tr><td><code>bt</code> (K)</td><td>brightness</td><td>bright_ti4</td></tr>
+<tr><td><code>frp</code> (MW)</td><td>frp</td><td>frp</td></tr>
+<tr><td><code>c</code> (0–100)</td><td>confidence (already 0–100)</td><td>confidence class mapped: <b>l→20, n→60, h→90</b></td></tr>
+<tr><td><code>dn</code></td><td>daynight</td><td>daynight</td></tr>
+</tbody></table>
+<p>The VIIRS class mapping is a simplification: it makes the two confidence scales roughly comparable for display and filtering, but they come from different detection algorithms and are not identical in meaning.</p>
+
+<h2>3. Harmonization (<code>js/dashboard.js → harmonize()</code>)</h2>
+<p>Goal: decide which MODIS and VIIRS detections are <i>the same fire</i>, without double-counting. We use a <b>Greedy Spatial-Temporal Matching with Grid Bucketing</b> algorithm.</p>
+
+<h3>Step-by-step algorithm:</h3>
+<ol>
+<li><b>Grid Bucketing (Optimization):</b> Comparing every MODIS point to every VIIRS point is slow (O(N×M) complexity). To speed this up, the world map is divided into a grid of 0.05° squares (~5.5 km at the equator). All VIIRS points are placed into these cells using a JavaScript <code>Map</code>.</li>
+<li><b>Candidate Search:</b> The algorithm takes each MODIS point and looks only in its native cell and the 8 adjacent cells (horizontal, vertical, diagonal). This prevents missing matches that lie just across a cell boundary while drastically reducing the number of checks.</li>
+<li><b>Time Filter:</b> For each VIIRS point in the neighbouring cells, the time difference is checked. If the difference is greater than the selected "Max time gap" slider, the VIIRS point is discarded.</li>
+<li><b>Distance Filter:</b> If the time fits, the exact distance is calculated using the <b>Haversine formula</b> (accounting for Earth's curvature). If the distance is greater than the selected "Max distance" limit, it is discarded.</li>
+<li><b>Greedy Selection:</b> The algorithm doesn't just take the first matching point. It evaluates all candidates and selects the VIIRS point that is <b>closest</b> to the current MODIS point.</li>
+<li><b>1-to-1 Matching:</b> Once the best pair is found, the VIIRS point is marked as <code>used</code> in a <code>Set</code>. This ensures one VIIRS point cannot be matched to multiple MODIS points, which is critical for fair statistics.</li>
+<li><b>Result Formation:</b> The pair is saved. Points left without a pair (MODIS-only or VIIRS-only) are kept as single-sensor detections because they contain unique information.</li>
+</ol>
+
+<h3>Why this algorithm?</h3>
+<ul>
+<li><b>Speed:</b> Thanks to Grid Bucketing, the algorithm runs in roughly linear time O(N), enabling instant recalculation when the user moves the sliders on the dashboard.</li>
+<li><b>Geometric Accuracy:</b> The Haversine formula ensures correct distances in kilometers.</li>
+<li><b>Practicality:</b> Nearest Neighbor matching is a classic approach that works well for fires since a fire has a clear physical center.</li>
+</ul>
+<p><b>Limitations:</b> A greedy algorithm does not guarantee a global optimum (unlike the Hungarian algorithm), but it provides an excellent balance between speed and accuracy for dense spatial-temporal points in a web browser.</p>
+
+<h2>4. Static heat source filter (<code>js/persistent.js</code>)</h2>
+<ul>
+<li>The map is bucketed into cells of roughly the chosen size (0.5–3 km). If the same cell has detections on at least N <b>distinct UTC days</b> (default 3), every point in it is flagged <code>persistent</code>.</li>
+<li>Persistent points are drawn with a dashed grey ring and reduced opacity, and can be hidden with the “Hide persistent hot spots” checkbox. Typical members: gas flares, industrial furnaces, active volcanoes.</li>
+</ul>
+
+<h2>5. Fire likelihood score (<code>js/confidence.js</code>)</h2>
+<p>Every point gets a 0–100 “fire likelihood” score shown in its popup and CSV export:</p>
+<table><thead><tr><th>Factor</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td>Sensor confidence (0–100)</td><td>Base score</td></tr>
+<tr><td>Seen by both sensors (matched pair)</td><td>+15</td></tr>
+<tr><td>FRP ≥ 50 MW</td><td>+5</td></tr>
+<tr><td>Flagged persistent</td><td>Class overridden to <b>“Static heat source”</b>, score 5</td></tr>
+</tbody></table>
+<p>Levels: <b>High</b> ≥ 70 (very likely a real fire), <b>Medium</b> 40–69 (probably a fire, cross-check), <b>Low</b> &lt; 40 (uncertain — possible false alarm). This is a heuristic for triage, not a calibrated probability.</p>
+
+<h2>6. Anomaly watch</h2>
+<ul>
+<li>Daily counts of unique harmonized detections are compared against the selected period: a day with a <b>z-score ≥ 2</b> (at least 2 standard deviations above the period mean) is anomalous. Needs ≥ 7 days of data.</li>
+<li>The regional table repeats the same test per continent-scale region and flags regions whose peak day is anomalous with ≥ 5 detections.</li>
+</ul>
+
+<h2>7. Map, colors and exports</h2>
+<ul>
+<li><b>Map labels:</b> the layer control in the top-right of the map switches between <i>English labels</i> (CARTO Voyager tiles), <i>local-language labels</i> (standard OpenStreetMap) and unlabeled satellite imagery (Esri).</li>
+<li><b>Palette:</b> MODIS vermillion <code>#D55E00</code>, VIIRS blue <code>#0072B2</code>, harmonized amber <code>#E69F00</code> — chosen from the colorblind-safe Okabe–Ito palette so the three classes stay distinguishable for most viewers.</li>
+<li><b>CSV exports</b> include all normalized fields plus <code>matched</code>, <code>persistent</code> and the fire-likelihood level/score.</li>
+</ul>
+
+<h2>8. Known limitations</h2>
+<div class="warn">
+<p>⚠ FIRMS near-real-time data is capped at 5 days per request and has no long history in this app; the demo dataset is synthetic. Harmonization is greedy nearest-neighbour matching. The fire-likelihood score is a heuristic, not a calibrated probability. Detections can be delayed by cloud cover, and “no detection” does not mean “no fire”.</p>
+</div>
+
+<h2>9. System Architecture & Security</h2>
+<p>To ensure high performance and protect sensitive credentials, the application is built on a Node.js Backend-for-Frontend (BFF) architecture:</p>
+<ul>
+<li><b>API Key Protection:</b> The BFF acts as a secure proxy. The NASA FIRMS API key is stored on the server and is never exposed to the browser's developer tools or the end user.</li>
+<li><b>Caching:</b> The backend implements an in-memory LRU cache. If multiple users request the same bounding box and date range, the server returns the cached result instead of hitting NASA's API rate limits.</li>
+<li><b>Graceful Fallback:</b> If the NASA API fails (e.g., network issues or exceeding the 5-day limit), the frontend is programmed to seamlessly load the synthetic demo dataset. This ensures the application never shows a "broken" state during a presentation.</li>
+</ul>
+
+<h2>10. Edge Cases & Geographic Limitations</h2>
+<ul>
+<li><b>Antimeridian Crossing (180° line):</b> The current implementation uses a standard bounding box. Fires crossing the International Date Line (e.g., near Fiji or the Russian Far East) might not render correctly if a bounding box spans from +179° to -179°.</li>
+<li><b>High Latitudes:</b> While the Haversine formula correctly calculates distances on a sphere, the 0.05° grid bucketing used for optimization becomes distorted near the poles (where longitude lines converge). For Arctic regions, a dynamic grid size would be required.</li>
+<li><b>Time Zones:</b> All times are strictly parsed and displayed in UTC to avoid ambiguity across different global time zones.</li>
+</ul>
+
+<h2>11. Practical Impact & Use Cases</h2>
+<p>Why does harmonizing MODIS and VIIRS matter in the real world?</p>
+<ul>
+<li><b>Firefighters & First Responders:</b> Can use the harmonized map to spot small, newly ignited fires that MODIS alone would miss due to its coarser resolution, allowing for faster dispatch and containment.</li>
+<li><b>Climate Researchers:</b> Can filter out persistent industrial flares and volcanoes to get a cleaner dataset for calculating annual carbon emissions and tracking wildfire trends.</li>
+<li><b>Local Governments:</b> The "Anomaly Watch" feature allows authorities to quickly identify days with unusually high fire activity and compare regions for resource allocation.</li>
+</ul>
+
+<h2>12. Future Work & Roadmap</h2>
+<p>If we had more time, we would implement the following enhancements:</p>
+<ul>
+<li><b>Advanced Clustering:</b> Replace the current greedy nearest-neighbor algorithm with ST-DBSCAN or the Hungarian algorithm for mathematically optimal global matching.</li>
+<li><b>Historical Baseline:</b> Integrate standard-science-quality data (not just NRT) to build a 10-year historical baseline for better anomaly detection.</li>
+<li><b>Wind Integration:</b> Overlay wind direction and speed data to predict how the detected fires might spread.</li>
+<li><b>Sensor Agnostic:</b> Add support for geostationary satellites (e.g., GOES) which provide updates every 10-15 minutes, perfect for early fire detection.</li>
+<li><b>Desktop Application:</b> Develop a standalone offline desktop version (e.g., using Electron or Tauri) with local file support, allowing users to drag-and-drop and analyze their own geospatial data in <code>.json</code>, <code>.csv</code>, and <code>.shp</code> (Shapefile) formats.</li>
+</ul>
+
+<p style="margin-top:2rem"><a href="dashboard.html">← Back to the dashboard</a></p>
+</main>
+</body></html>

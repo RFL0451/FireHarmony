@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Harmonizing MODIS and VIIRS for Global Fire Monitoring</title>
+<meta name="description" content="Why combining MODIS and VIIRS active-fire detections gives a fuller picture of fires on Earth. NASA Space Apps Challenge 2026">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head><body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav"><div class="wrap">
+<a class="brand" href="index.html"><i aria-hidden="true"></i>FireHarmony</a>
+<nav aria-label="Main"><a href="index.html" aria-current="page">Overview</a><a href="map.html">Map</a><a href="dashboard.html">Dashboard</a><a href="wiki.html">Wiki</a></nav>
+</div></header>
+<div class="progress" id="bar" aria-hidden="true"></div>
+<nav class="dots" id="dots" aria-label="Slides"></nav>
+<div class="pager" role="group" aria-label="Slide controls"><button id="prev" aria-label="Previous slide">&#8592;</button><span id="count" aria-live="polite">1 / 9</span><button id="next" aria-label="Next slide">&#8594;</button></div>
+<main id="main" class="deck">
+
+<section class="slide hero" data-title="Title" aria-label="Slide 1: Title"><div class="wrap cols">
+<div><h1>Harmonizing MODIS and VIIRS for Global Fire Monitoring</h1>
+<p class="lead">How combining two satellite sensors gives us a fuller, more accurate picture of fires on Earth</p>
+<div class="btns"><a class="btn" href="map.html">Explore the Data</a><button class="btn alt" type="button" onclick="document.getElementById('next').click()">Start the story</button></div></div>
+<svg viewBox="0 0 400 400" role="img" aria-label="Illustration of Earth seen from space with glowing fire hot spots">
+<defs><radialGradient id="g" cx="35%" cy="30%"><stop offset="0" stop-color="#2a63c9"/><stop offset=".6" stop-color="#0B3D91"/><stop offset="1" stop-color="#030a20"/></radialGradient>
+<radialGradient id="h"><stop offset="0" stop-color="#ffe066"/><stop offset=".4" stop-color="#FC3D21"/><stop offset="1" stop-color="#FC3D21" stop-opacity="0"/></radialGradient></defs>
+<circle cx="200" cy="200" r="178" fill="url(#g)"/>
+<g fill="#1d7a4f" opacity=".75"><path d="M110 120q40-30 75-5t10 50-50 20-40 50-30-40 35-75z"/><path d="M215 170q40-20 70 10t-5 70-40 40-25-60z"/><path d="M150 285q30-10 50 15t-15 35-45-20z"/></g>
+<g><circle class="hs" cx="150" cy="165" r="9" fill="url(#h)"/><circle class="hs" cx="170" cy="190" r="6" fill="url(#h)"/><circle class="hs" cx="245" cy="215" r="10" fill="url(#h)"/><circle class="hs" cx="262" cy="190" r="5" fill="url(#h)"/><circle class="hs" cx="225" cy="250" r="7" fill="url(#h)"/><circle class="hs" cx="175" cy="300" r="6" fill="url(#h)"/><circle class="hs" cx="130" cy="140" r="5" fill="url(#h)"/><circle class="hs" cx="285" cy="245" r="6" fill="url(#h)"/></g>
+<circle cx="200" cy="200" r="178" fill="none" stroke="#6ea0ff" stroke-opacity=".35" stroke-width="3"/></svg>
+</div></section>
+
+<section class="slide" data-title="The problem" aria-label="Slide 2: The problem"><div class="wrap">
+<h2>Two sensors, two ways of seeing fire</h2>
+<p class="lead">MODIS and VIIRS both detect thermal anomalies, the "hot spots" that usually mean active fires. Their data cannot simply be merged, because they differ in three ways</p>
+<ul class="facts">
+<li><b>Spatial resolution</b>MODIS sees the ground in 1 km pixels; VIIRS in 375 m pixels</li>
+<li><b>Operational period</b>MODIS has recorded fires since 2000; VIIRS since 2012</li>
+<li><b>Detection algorithms</b>Each sensor has its own thresholds, confidence scales and quirks</li></ul>
+</div></section>
+
+<section class="slide" data-title="Side by side" aria-label="Slide 3: MODIS and VIIRS side by side"><div class="wrap">
+<h2>MODIS and VIIRS side by side</h2>
+<table class="cmp"><thead><tr><th scope="col"><span class="sr" style="position:absolute;left:-999px">Property</span></th><th scope="col" class="m">MODIS</th><th scope="col" class="v">VIIRS</th></tr></thead><tbody>
+<tr><th scope="row">Resolution</th><td>1 km</td><td>375 m (I-bands)</td></tr>
+<tr><th scope="row">Operational</th><td>Terra (data since 2000), Aqua (since 2002)</td><td>Suomi NPP (since 2012), NOAA-20 and later</td></tr>
+<tr><th scope="row">Sensitivity</th><td>Strong on large, intense fires</td><td>Better on small, low-intensity fires</td></tr>
+<tr><th scope="row">Limitations</th><td>Coarse pixels miss small, cool fires</td><td>Shorter record; saturates on very intense fires</td></tr></tbody></table>
+</div></section>
+<section class="slide" data-title="Resolution" aria-label="Slide 4"><div class="wrap cols even">
+<div><h2>Why resolution changes what we see</h2>
+<p class="lead">Resize the fire, or click the grid to move it. A small fire can hide inside one 1 km MODIS pixel but fill a large share of a 375 m VIIRS pixel</p>
+<div class="px-ctl"><label for="pxR">Fire radius: <output id="pxROut">80 m</output></label><input type="range" id="pxR" min="30" max="600" step="10" value="80">
+<div class="px-modes" role="radiogroup" aria-label="Sensor grid"><label><input type="radio" name="pxMode" value="BOTH" checked> Both</label><label><input type="radio" name="pxMode" value="MODIS"> MODIS 1 km</label><label><input type="radio" name="pxMode" value="VIIRS"> VIIRS 375 m</label></div>
+<p class="px-res" id="pxRes" aria-live="polite"></p>
+<p class="note">Simplified illustration: a pixel lights up when the fire covers at least 3% of it. Real algorithms also use brightness temperature and surrounding context</p></div></div>
+<svg id="pxSvg" class="pxsvg" viewBox="0 0 360 360" role="img" tabindex="0" aria-label="Fire over MODIS and VIIRS pixel grids"></svg>
+</div></section>
+
+
+<section class="slide" data-title="Why not only VIIRS" aria-label="Slide 5: Why not use only VIIRS"><div class="wrap">
+<h2>Why not use only VIIRS?</h2>
+<div class="grid g3">
+<article class="card"><h3>MODIS is the long record</h3><p>Its 20+ years of continuous observations make it the "gold standard" for long-term climate and fire trends</p></article>
+<article class="card"><h3>VIIRS sees small fires</h3><p>Finer pixels catch small, low-intensity fires, but very large intense fires can saturate the sensor and limit intensity estimates</p></article>
+<article class="card"><h3>Each misses something</h3><p>Every sensor misses fires the other detects. Together they close the blind spots</p></article>
+</div></div></section>
+
+<section class="slide" data-title="Complementary" aria-label="Slide 6: Complementary detections"><div class="wrap cols even">
+<div><h2>Each sensor has detections the other misses</h2><p class="lead">Fires seen by both sensors give us confidence. Fires seen by only one are exactly what a single-sensor record would lose</p></div>
+<svg class="venn" viewBox="0 0 440 240" role="img" aria-label="Venn diagram: MODIS-only detections, VIIRS-only detections and detections seen by both sensors">
+<circle cx="165" cy="120" r="100" fill="#D55E00" fill-opacity=".45" stroke="#a84a00" stroke-width="2"/>
+<circle cx="275" cy="120" r="100" fill="#0072B2" fill-opacity=".45" stroke="#005a8f" stroke-width="2"/>
+<g fill="#0b1736" font-family="Inter,sans-serif" font-weight="700" font-size="14" text-anchor="middle"><text x="110" y="115">MODIS only</text><text x="110" y="135" font-weight="400" font-size="12">large, intense</text>
+<text x="330" y="115">VIIRS only</text><text x="330" y="135" font-weight="400" font-size="12">small, cool</text>
+<text x="220" y="115">Both</text><text x="220" y="135" font-weight="400" font-size="12">matched</text></g></svg>
+</div></section>
+
+<section class="slide" data-title="Harmonization" aria-label="Slide 7: Our solution, harmonization"><div class="wrap">
+<h2>Our solution: harmonization</h2>
+<p class="lead">Harmonization turns two different records into one unified dataset</p>
+<ol class="steps">
+<li><h3>Align formats</h3><p>Bring both products into one common set of fields</p></li>
+<li><h3>Align timestamps</h3><p>Put every detection on the same UTC time scale</p></li>
+<li><h3>Match and merge</h3><p>Detections within 1 km and 3 hours are one fire. Detections only one sensor saw are kept</p></li></ol>
+</div></section>
+
+<section class="slide" data-title="Goals" aria-label="Slide 8: Project goals"><div class="wrap">
+<h2>Project goals</h2>
+<ol class="goals"><li>Build a unified fire record for historical and geographic analysis</li><li>Identify periods of anomalously high fire activity by region</li></ol>
+<p class="lead">Useful for fire managers, climate researchers and anyone who needs a longer, fuller fire record</p>
+<div class="btns"><a class="btn alt" href="https://doi.org/10.1016/j.rse.2016.02.054" target="_blank" rel="noopener">Read the Research: MODIS (Giglio et al., 2016)</a><a class="btn alt" href="https://doi.org/10.1016/j.rse.2013.12.008" target="_blank" rel="noopener">Read the Research: VIIRS (Schroeder et al., 2014)</a></div>
+</div></section>
+
+<section class="slide" data-title="Explore" aria-label="Slide 9: About the project and explore the data"><div class="wrap">
+<h2>See it for yourself</h2>
+<p class="lead">Built during the NASA Space Apps Challenge 2026. Compare MODIS, VIIRS and the harmonized record on an interactive map</p>
+<div class="btns"><a class="btn" href="map.html">Explore the Data</a><a class="btn alt" href="https://github.com/YOUR-ORG/YOUR-REPO" target="_blank" rel="noopener">GitHub repository</a></div>
+<p style="margin-top:1rem">Team: Your Name, Teammate Name, Teammate Name</p>
+<div class="foot">
+<div><strong>Data sources</strong><ul><li><a href="https://firms.modaps.eosdis.nasa.gov/" rel="noopener">NASA FIRMS</a></li><li><a href="https://worldview.earthdata.nasa.gov/" rel="noopener">NASA Worldview</a></li></ul></div>
+<div><strong>Contact</strong><ul><li><a href="mailto:team@example.com">team@example.com</a></li></ul></div>
+<div><strong>License</strong><p>Code: MIT. NASA data is freely available; see the FIRMS data policy. Demo data is synthetic. Not an official NASA product</p></div></div>
+</div></section>
+</main>
+<script src="js/slides.js"></script>
+<script src="js/pixels.js"></script>
+</body></html>

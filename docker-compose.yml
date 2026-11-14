@@ -1,0 +1,12 @@
+# Convenience only — plain `docker build` / `docker run` works too (see Dockerfile).
+services:
+  fireharmony:
+    build: .
+    image: fireharmony:latest
+    ports:
+      - "3000:3000"
+    environment:
+      # get a free key: https://firms.modaps.eosdis.nasa.gov/api/map_key/
+      # leave empty for demo mode with synthetic data
+      FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
+    restart: unless-stopped
