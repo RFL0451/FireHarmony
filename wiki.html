@@ -9,7 +9,8 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="nav"><div class="wrap">
 <a class="brand" href="index.html"><i aria-hidden="true"></i>FireHarmony</a>
-<nav aria-label="Main"><a href="index.html">Overview</a><a href="map.html">Map</a><a href="dashboard.html">Dashboard</a><a href="wiki.html" aria-current="page">Wiki</a></nav>
+<button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mainnav"><span></span><span></span><span></span></button>
+<nav id="mainnav" aria-label="Main"><a href="index.html">Overview</a><a href="map.html">Map</a><a href="dashboard.html">Dashboard</a><a href="wiki.html" aria-current="page">Wiki</a><a href="index.html#contact">Contact</a></nav>
 </div></header>
 <main id="main" class="wrap wiki" style="padding:2rem 0 4rem">
 <h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Wiki: what happens to the data</h1>
@@ -20,7 +21,7 @@
 <li><b>NASA FIRMS</b> (Fire Information for Resource Management System), near-real-time API: <code>MODIS_NRT</code> (Terra/Aqua, ~1 km pixels, record since 2000) and <code>VIIRS_SNPP_NRT</code> (Suomi NPP, 375 m pixels, since 2012).</li>
 <li>The FIRMS area API accepts a bounding box and a range of <b>at most 5 days</b> per request. Longer ranges are rejected (HTTP 400).</li>
 <li>Each detection is a point with: latitude/longitude, acquisition date and time (UTC), brightness temperature (K), <b>FRP</b> — fire radiative power (MW), confidence, satellite and a day/night flag.</li>
-<li><b>Demo mode:</b> if the API key is missing or the request fails, the app falls back to synthetic detections modelled on FIRMS fields (the status line says “Showing demo data (synthetic)”). Demo numbers are not real fire counts.</li>
+<li><b>Demo mode:</b> if the API key is missing or the request fails, the app falls back to synthetic detections modelled on FIRMS fields (the status line says “Showing demo data (synthetic)”). Demo numbers are not real fire counts.</li><li><b>Base maps</b> (map tiles drawn under the detections; they are not fire data): <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap contributors</a> for the local-language map; <a href="https://www.esri.com" rel="noopener" target="_blank">Esri, DeLorme, NAVTEQ</a> (Esri World Street Map) for the English-label map; <a href="https://www.esri.com" rel="noopener" target="_blank">Esri World Imagery</a> for the satellite view.</li>
 </ul>
 
 <h2>2. Normalization (<code>server/normalize.js</code>)</h2>
@@ -83,7 +84,7 @@
 
 <h2>7. Map, colors and exports</h2>
 <ul>
-<li><b>Map labels:</b> the layer control in the top-right of the map switches between <i>English labels</i> (CARTO Voyager tiles), <i>local-language labels</i> (standard OpenStreetMap) and unlabeled satellite imagery (Esri).</li>
+<li><b>Map labels:</b> the layer control in the top-right of the map switches between <i>English labels</i> (Esri World Street Map tiles), <i>local-language labels</i> (standard OpenStreetMap) and unlabeled satellite imagery (Esri World Imagery).</li>
 <li><b>Palette:</b> MODIS vermillion <code>#D55E00</code>, VIIRS blue <code>#0072B2</code>, harmonized amber <code>#E69F00</code> — chosen from the colorblind-safe Okabe–Ito palette so the three classes stay distinguishable for most viewers.</li>
 <li><b>CSV exports</b> include all normalized fields plus <code>matched</code>, <code>persistent</code> and the fire-likelihood level/score.</li>
 </ul>
@@ -126,6 +127,46 @@
 <li><b>Desktop Application:</b> Develop a standalone offline desktop version (e.g., using Electron or Tauri) with local file support, allowing users to drag-and-drop and analyze their own geospatial data in <code>.json</code>, <code>.csv</code>, and <code>.shp</code> (Shapefile) formats.</li>
 </ul>
 
+<h2>13. Sources and references</h2>
+<p>The methods and design choices on this page rest on the publications, NASA documentation and open tools below. For each source we note what we took from it.</p>
+
+<h3>Scientific publications: fire detection algorithms</h3>
+<ul class="refs">
+<li>Giglio, L., Schroeder, W., &amp; Justice, C. O. (2016). <i>The collection 6 MODIS active fire detection algorithm and fire products.</i> Remote Sensing of Environment, 178, 31–41. <a href="https://doi.org/10.1016/j.rse.2016.02.054" rel="noopener" target="_blank">doi:10.1016/j.rse.2016.02.054</a>
+<span class="ref-use"><b>What we used:</b> the description of the MODIS Collection 6 active fire detection algorithm, including its contextual and absolute threshold tests and the procedures that reject false alarms (for example sun glint and coastal areas). Together with the 1 km pixel size, this explains why MODIS has coarser resolution and tends to miss small fires.</span></li>
+<li>Schroeder, W., Oliva, P., Giglio, L., &amp; Csiszar, I. A. (2014). <i>The new VIIRS 375 m active fire detection data product: Algorithm description and initial assessment.</i> Remote Sensing of Environment, 143, 85–96. <a href="https://doi.org/10.1016/j.rse.2013.12.008" rel="noopener" target="_blank">doi:10.1016/j.rse.2013.12.008</a>
+<span class="ref-use"><b>What we used:</b> the rationale for the 375 m VIIRS data, which give more detailed and more coherent mapping than MODIS, especially for small and low-intensity fires. This is the key source for why the two sensors have to be harmonized.</span></li>
+</ul>
+
+<h3>NASA data and documentation</h3>
+<ul class="refs">
+<li><b>NASA FIRMS</b> (Fire Information for Resource Management System). <a href="https://firms.modaps.eosdis.nasa.gov/" rel="noopener" target="_blank">firms.modaps.eosdis.nasa.gov</a>
+<span class="ref-use"><b>What we used:</b> the direct source of all satellite detections (MODIS and VIIRS) in near real time (NRT). The FIRMS documentation also describes the differences between the data fields — for example, MODIS confidence is a percentage while VIIRS confidence is a class (low / nominal / high) — which we handled when normalizing the data on the backend (see section 2).</span></li>
+<li><b>NASA Earthdata.</b> <a href="https://www.earthdata.nasa.gov/" rel="noopener" target="_blank">earthdata.nasa.gov</a>
+<span class="ref-use"><b>What we used:</b> product specifications such as VNP14IMG_NRT (VIIRS, 375 m), which helped us understand the structure and format of the input data.</span></li>
+</ul>
+
+<h3>Clustering methodology</h3>
+<ul class="refs">
+<li>Studies on ST-DBSCAN and spatio-temporal clustering (2026).
+<span class="ref-use"><b>What we used:</b> the rationale for grouping scattered points into events. The project implements a simplified greedy algorithm (section 3), but it follows the same principle as ST-DBSCAN — spatio-temporal density — which is widely used to find dense groups of events and filter out noise.</span></li>
+<li>FireCluster (2026). <i>A multi-source satellite active fire data clustering algorithm for comprehensive wildfire event identification.</i>
+<span class="ref-use"><b>What we used:</b> the idea that detections from different sources (MODIS and VIIRS) must be considered together to identify complex fire events, which directly matches the goal of this project.</span></li>
+</ul>
+
+<h3>Challenge description</h3>
+<ul class="refs">
+<li>Official description of the challenge <i>Harmonization of MODIS and VIIRS Hot Spots</i> (NASA Space Apps Challenge 2026).
+<span class="ref-use"><b>What we used:</b> the problem statement — merge the records of the two sensors to understand when and where fires occurred, and build a tool for analysing historical activity and spotting anomalies.</span></li>
+</ul>
+
+<h3>Visualization technologies</h3>
+<ul class="refs">
+<li><b>Leaflet.js</b> (with the Leaflet.markercluster plugin), <b>Chart.js</b>, <b>OpenStreetMap</b> and <b>Esri</b> map tiles.
+<span class="ref-use"><b>What we used:</b> the libraries and map services behind the interactive map, the charts and the base maps with administrative borders and English labels.</span></li>
+</ul>
+
 <p style="margin-top:2rem"><a href="dashboard.html">← Back to the dashboard</a></p>
 </main>
+<script src="js/nav.js"></script>
 </body></html>
