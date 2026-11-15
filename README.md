@@ -107,7 +107,7 @@ Go to [http://localhost:3000](http://localhost:3000) in your browser.
 **Map is gray or not loading**
 - Make sure you have an active internet connection (the map uses external OpenStreetMap tiles).
 
-## 👥 Team
-- **Your Name** - Role
-- **Teammate Name** - Role
+## 👥 Team kikoriki
+
+- Vlada Kim, Komila Nurullaeva, Stepan Lomonosov, Pavel Mishin, Bekzat Serikbayev
 ```
