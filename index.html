@@ -10,7 +10,8 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="nav"><div class="wrap">
 <a class="brand" href="index.html"><i aria-hidden="true"></i>FireHarmony</a>
-<nav aria-label="Main"><a href="index.html" aria-current="page">Overview</a><a href="map.html">Map</a><a href="dashboard.html">Dashboard</a><a href="wiki.html">Wiki</a></nav>
+<button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mainnav"><span></span><span></span><span></span></button>
+<nav id="mainnav" aria-label="Main"><a href="index.html" aria-current="page">Overview</a><a href="map.html">Map</a><a href="dashboard.html">Dashboard</a><a href="wiki.html">Wiki</a><a href="index.html#contact">Contact</a></nav>
 </div></header>
 <div class="progress" id="bar" aria-hidden="true"></div>
 <nav class="dots" id="dots" aria-label="Slides"></nav>
@@ -96,13 +97,17 @@
 <h2>See it for yourself</h2>
 <p class="lead">Built during the NASA Space Apps Challenge 2026. Compare MODIS, VIIRS and the harmonized record on an interactive map</p>
 <div class="btns"><a class="btn" href="map.html">Explore the Data</a><a class="btn alt" href="https://github.com/YOUR-ORG/YOUR-REPO" target="_blank" rel="noopener">GitHub repository</a></div>
-<p style="margin-top:1rem">Team: Your Name, Teammate Name, Teammate Name</p>
+<p style="margin-top:1rem">Team <strong>kikoriki</strong>: Vlada Kim, Komila Nurullaeva, Stepan Lomonosov, Pavel Mishin, Bekzat Serikbayev</p>
 <div class="foot">
 <div><strong>Data sources</strong><ul><li><a href="https://firms.modaps.eosdis.nasa.gov/" rel="noopener">NASA FIRMS</a></li><li><a href="https://worldview.earthdata.nasa.gov/" rel="noopener">NASA Worldview</a></li></ul></div>
-<div><strong>Contact</strong><ul><li><a href="mailto:team@example.com">team@example.com</a></li></ul></div>
+<div id="contact"><strong>Contact</strong>
+<p class="mail-main"><span class="mail-label">Main contact</span><a href="mailto:nurullaevakomila03@gmail.com">nurullaevakomila03@gmail.com</a></p>
+<span class="mail-label">Other team members</span>
+<ul><li><a href="mailto:anibook046@gmail.com">anibook046@gmail.com</a></li><li><a href="mailto:whiskeyhotel1bravozulu@gmail.com">whiskeyhotel1bravozulu@gmail.com</a></li><li><a href="mailto:tocksa08@gmail.com">tocksa08@gmail.com</a></li><li><a href="mailto:serikbayevb05@gmail.com">serikbayevb05@gmail.com</a></li></ul></div>
 <div><strong>License</strong><p>Code: MIT. NASA data is freely available; see the FIRMS data policy. Demo data is synthetic. Not an official NASA product</p></div></div>
 </div></section>
 </main>
 <script src="js/slides.js"></script>
 <script src="js/pixels.js"></script>
+<script src="js/nav.js"></script>
 </body></html>
